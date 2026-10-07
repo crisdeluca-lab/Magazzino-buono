@@ -1,2 +1,76 @@
-[InternetShortcut]
-URL=https://chatgpt.com/s/t_6ac694fc069c819188bab6d3ad6505d9
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Magazzino">
+<title>Magazzino</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f2f4f7;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif;padding-bottom:86px}
+header{background:#fff;padding:calc(env(safe-area-inset-top) + 14px) 18px 14px;border-bottom:1px solid #e4e7ec;position:sticky;top:0;z-index:5}
+h1{font-size:27px;margin:0 0 3px}.sub{color:#737b89;font-size:14px}
+main{padding:16px}.view{display:none}.view.active{display:block}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}.card{background:white;border-radius:17px;padding:15px;box-shadow:0 2px 12px #00000008}.label{font-size:12px;color:#727b8b}.num{font-size:26px;font-weight:750;margin-top:5px}.red{color:#d92d20}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}.bigbtn{border:0;border-radius:16px;padding:16px 10px;font-size:16px;font-weight:700}.load{background:#dff7e7;color:#087443}.unload{background:#ffe3e1;color:#b42318}
+.sectiontitle{font-size:18px;font-weight:750;margin:20px 2px 10px}.search{width:100%;padding:13px 14px;border:1px solid #dfe3e8;border-radius:13px;background:#fff;font-size:16px;margin-bottom:10px}
+.item{background:#fff;border-radius:15px;padding:14px;margin:8px 0;display:flex;justify-content:space-between;gap:10px;box-shadow:0 1px 7px #00000007}.item b{display:block}.meta{font-size:13px;color:#747d8c;margin-top:4px}.qty{font-weight:750;text-align:right}.low{color:#d92d20}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e3e6eb;display:grid;grid-template-columns:repeat(3,1fr);padding:8px 5px calc(8px + env(safe-area-inset-bottom));z-index:9}nav button{border:0;background:none;color:#697386;font-size:11px;font-weight:650;padding:7px}nav button.active{color:#2563eb}nav span{display:block;font-size:21px;margin-bottom:2px}
+.modal{display:none;position:fixed;inset:0;background:#0006;z-index:20;align-items:flex-end}.modal.show{display:flex}.sheet{background:#fff;width:100%;border-radius:22px 22px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto}.sheet h2{margin:0 0 16px}
+label{font-size:13px;font-weight:650;color:#606a79;display:block;margin:11px 0 5px}input,select{width:100%;padding:13px;border:1px solid #d9dee6;border-radius:11px;background:#fff;font-size:16px}.save{width:100%;border:0;background:#2563eb;color:white;padding:15px;border-radius:13px;font-size:16px;font-weight:750;margin-top:18px}.cancel{width:100%;border:0;background:#eef1f5;padding:13px;border-radius:13px;font-size:16px;margin-top:8px}
+.empty{text-align:center;color:#7a8493;padding:25px}.move{font-size:12px;font-weight:700;border-radius:8px;padding:4px 7px}.in{background:#dff7e7;color:#087443}.out{background:#ffe3e1;color:#b42318}
+</style>
+</head>
+<body>
+<header><h1>Magazzino</h1><div class="sub">Gestione personale su iPhone</div></header>
+<main>
+<section id="home" class="view active">
+<div class="cards">
+<div class="card"><div class="label">Prodotti</div><div class="num" id="products">0</div></div>
+<div class="card"><div class="label">Pezzi</div><div class="num" id="pieces">0</div></div>
+<div class="card"><div class="label">Valore</div><div class="num" id="value">€ 0</div></div>
+<div class="card"><div class="label">Sotto scorta</div><div class="num red" id="low">0</div></div>
+</div>
+<div class="actions"><button class="bigbtn load" onclick="openMove('carico')">＋ Carico</button><button class="bigbtn unload" onclick="openMove('scarico')">− Scarico</button></div>
+<div class="sectiontitle">Scorte</div><div id="stock"></div>
+</section>
+<section id="prodotti" class="view">
+<div class="sectiontitle">Prodotti</div><input class="search" id="search" placeholder="🔎 Cerca prodotto..." oninput="renderProducts()"><button class="bigbtn load" style="width:100%" onclick="openProduct()">＋ Nuovo prodotto</button><div id="productList"></div>
+</section>
+<section id="movimenti" class="view">
+<div class="sectiontitle">Movimenti</div><div id="moveList"></div>
+</section>
+</main>
+<nav><button class="active" onclick="show('home',this)"><span>⌂</span>Home</button><button onclick="show('prodotti',this)"><span>▦</span>Prodotti</button><button onclick="show('movimenti',this)"><span>↕</span>Movimenti</button></nav>
+
+<div class="modal" id="productModal"><div class="sheet"><h2>Nuovo prodotto</h2>
+<label>Codice / barcode</label><input id="pc" placeholder="es. 8001234567890">
+<label>Nome</label><input id="pn" placeholder="Nome prodotto">
+<label>Categoria</label><input id="pg" placeholder="Categoria">
+<label>Giacenza iniziale</label><input id="pq" type="number" min="0" value="0">
+<label>Scorta minima</label><input id="pm" type="number" min="0" value="0">
+<label>Costo unitario (€)</label><input id="pk" type="number" min="0" step=".01" value="0">
+<button class="save" onclick="saveProduct()">Salva prodotto</button><button class="cancel" onclick="closeM('productModal')">Annulla</button>
+</div></div>
+<div class="modal" id="moveModal"><div class="sheet"><h2 id="moveTitle">Carico</h2>
+<label>Prodotto</label><select id="mp"></select><label>Quantità</label><input id="mq" type="number" min="1" value="1"><label>Causale</label><input id="mr" placeholder="Acquisto, vendita, rettifica...">
+<button class="save" onclick="saveMove()">Registra movimento</button><button class="cancel" onclick="closeM('moveModal')">Annulla</button>
+</div></div>
+<script>
+const K='magazzino_iphone_v1';let db=JSON.parse(localStorage.getItem(K)||'null')||{products:[],moves:[]},moveType='carico';
+function save(){localStorage.setItem(K,JSON.stringify(db))}
+function euro(x){return new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(x||0)}
+function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function render(){products.textContent=db.products.length;pieces.textContent=db.products.reduce((a,p)=>a+p.qty,0);value.textContent=euro(db.products.reduce((a,p)=>a+p.qty*p.cost,0));low.textContent=db.products.filter(p=>p.qty<=p.min).length;
+stock.innerHTML=db.products.length?db.products.map(p=>`<div class="item"><div><b>${esc(p.name)}</b><div class="meta">${esc(p.code)} · ${esc(p.cat)}</div></div><div class="qty ${p.qty<=p.min?'low':''}">${p.qty}<div class="meta">${p.qty<=p.min?'Sotto scorta':'disponibili'}</div></div></div>`).join(''):'<div class="empty">Nessun prodotto. Aggiungi il primo.</div>';renderProducts();renderMoves();save()}
+function renderProducts(){let q=(search?.value||'').toLowerCase();let a=db.products.filter(p=>(p.name+' '+p.code+' '+p.cat).toLowerCase().includes(q));productList.innerHTML=a.length?a.map(p=>`<div class="item"><div><b>${esc(p.name)}</b><div class="meta">${esc(p.code)} · ${esc(p.cat)}</div></div><div class="qty">${p.qty}<div class="meta">${euro(p.cost)}/pz</div></div></div>`).join(''):'<div class="empty">Nessun prodotto</div>'}
+function renderMoves(){let a=db.moves.slice().reverse();moveList.innerHTML=a.length?a.map(m=>{let p=db.products.find(x=>x.id===m.pid);return `<div class="item"><div><b>${esc(p?.name||'Prodotto')}</b><div class="meta">${new Date(m.date).toLocaleString('it-IT')} · ${esc(m.reason||'')}</div></div><div class="qty"><span class="move ${m.type==='carico'?'in':'out'}">${m.type==='carico'?'+':'−'}${m.qty}</span></div></div>`}).join(''):'<div class="empty">Nessun movimento</div>'}
+function show(id,b){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');render()}
+function openProduct(){['pc','pn','pg'].forEach(x=>document.getElementById(x).value='');pq.value=0;pm.value=0;pk.value=0;document.getElementById('productModal').classList.add('show')}
+function saveProduct(){if(!pn.value.trim())return alert('Inserisci il nome del prodotto');db.products.push({id:Date.now(),code:pc.value.trim()||('ART-'+Date.now()),name:pn.value.trim(),cat:pg.value.trim(),qty:+pq.value||0,min:+pm.value||0,cost:+pk.value||0});closeM('productModal');render()}
+function openMove(type){if(!db.products.length)return alert('Aggiungi prima un prodotto.');moveType=type;moveTitle.textContent=type==='carico'?'Carico merce':'Scarico merce';mp.innerHTML=db.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${p.qty} disponibili</option>`).join('');mq.value=1;mr.value='';document.getElementById('moveModal').classList.add('show')}
+function saveMove(){let p=db.products.find(x=>x.id===+mp.value),q=+mq.value||0;if(!q)return;if(moveType==='scarico'&&q>p.qty)return alert('Giacenza insufficiente');p.qty+=moveType==='carico'?q:-q;db.moves.push({id:Date.now(),pid:p.id,qty:q,type:moveType,date:new Date().toISOString(),reason:mr.value.trim()});closeM('moveModal');render()}
+function closeM(id){document.getElementById(id).classList.remove('show')}render();
+</script>
+</body></html>
